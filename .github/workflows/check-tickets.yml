@@ -19,6 +19,13 @@ jobs:
               const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 ticket availability monitor' } });
               if (!response.ok) throw new Error('Ticket site returned HTTP ' + response.status);
               const html = await response.text();
+
+              console.log("HTML length:", html.length);
+              console.log("Has 2026:", html.includes("2026"));
+              console.log("Has cookie:", html.toLowerCase().includes("cookie"));
+              console.log("Title:", html.match(/<title>(.*?)<\/title>/i));
+              console.log("Around 2026:", html.match(/.{0,100}2026.{0,100}/g));
+
               const match = html.match(/new Date\s*\(\s*2026\s*,\s*\(\s*10\s*-\s*1\s*\)\s*,\s*0?2\s*\)\s*,\s*'([0-9]+)'/);
               if (!match) throw new Error('Could not find the 2026-10-02 availability record');
               const availableSeats = Number(match[1]);
