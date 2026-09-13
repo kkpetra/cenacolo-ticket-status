@@ -2,7 +2,7 @@ name: Check ticket availability
 
 on:
   schedule:
-    - cron: '7,37 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions:
