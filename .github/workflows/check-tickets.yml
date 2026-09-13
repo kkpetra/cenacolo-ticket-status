@@ -1,41 +1,164 @@
 name: Check ticket availability
+
 on:
   schedule:
     - cron: '7,37 * * * *'
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   check:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/github-script@v7
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          script: |
-            const url = 'https://cenacolovinciano.vivaticket.it/en/event/cenacolo-visite-guidate-a-orario-fisso-in-inglese/238363?idt=2547';
+          node-version: 22
+
+      - name: Install Playwright
+        run: |
+          npm install playwright
+          npx playwright install chromium
+
+      - name: Check ticket availability
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > check.js <<'EOF'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+
+          const url = 'https://cenacolovinciano.vivaticket.it/en/event/cenacolo-visite-guidate-a-orario-fisso-in-inglese/238363?idt=2547';
+
+          async function main() {
+
             const checkedAt = new Date().toISOString();
+
             let check;
+
+            const browser = await chromium.launch({
+              headless: true
+            });
+
+            const page = await browser.newPage({
+              userAgent:
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+              locale: 'en-US'
+            });
+
             try {
-              const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 ticket availability monitor' } });
-              if (!response.ok) throw new Error('Ticket site returned HTTP ' + response.status);
-              const html = await response.text();
 
-              console.log("HTML length:", html.length);
-              console.log("HTML content:", html);
-              console.log("Has 2026:", html.includes("2026"));
-              console.log("Has cookie:", html.toLowerCase().includes("cookie"));
-              console.log("Title:", html.match(/<title>(.*?)<\/title>/i));
-              console.log("Around 2026:", html.match(/.{0,100}2026.{0,100}/g));
+              await page.goto(url, {
+                waitUntil: 'networkidle',
+                timeout: 60000
+              });
 
-              const match = html.match(/new Date\s*\(\s*2026\s*,\s*\(\s*10\s*-\s*1\s*\)\s*,\s*0?2\s*\)\s*,\s*'([0-9]+)'/);
-              if (!match) throw new Error('Could not find the 2026-10-02 availability record');
+
+              // 等待页面加载
+              await page.waitForTimeout(5000);
+
+
+              const html = await page.content();
+
+
+              console.log('HTML length:', html.length);
+              console.log(
+                'Contains 2026:',
+                html.includes('2026')
+              );
+
+
+              const match = html.match(
+                /new Date\s*\(\s*2026\s*,\s*\(\s*10\s*-\s*1\s*\)\s*,\s*0?2\s*\)\s*,\s*['"]([0-9]+)['"]/
+              );
+
+
+              if (!match) {
+
+                throw new Error(
+                  'Could not find the 2026-10-02 availability record'
+                );
+
+              }
+
+
               const availableSeats = Number(match[1]);
-              check = { checkedAt, outcome: availableSeats >= 2 ? 'available' : 'unavailable', availableSeats, message: availableSeats >= 2 ? 'At least two tickets appear available (' + availableSeats + ' seats reported).' : 'Fewer than two tickets are currently reported.', source: url };
-            } catch (error) {
-              check = { checkedAt, outcome: 'error', message: error.message, source: url };
+
+
+              check = {
+                checkedAt,
+                outcome:
+                  availableSeats >= 2
+                    ? 'available'
+                    : 'unavailable',
+                availableSeats,
+                message:
+                  availableSeats >= 2
+                    ? `At least two tickets appear available (${availableSeats} seats reported).`
+                    : 'Fewer than two tickets are currently reported.',
+                source: url
+              };
+
+
+            } catch(error) {
+
+              check = {
+                checkedAt,
+                outcome:'error',
+                message:error.message,
+                source:url
+              };
+
             }
-            const file = await github.rest.repos.getContent({ owner: context.repo.owner, repo: context.repo.repo, path: 'data/status.json' });
-            const status = JSON.parse(Buffer.from(file.data.content, 'base64').toString('utf8'));
+
+
+            await browser.close();
+
+
+            const statusPath = 'data/status.json';
+
+            const status =
+              JSON.parse(
+                fs.readFileSync(statusPath,'utf8')
+              );
+
+
             status.latest = check;
-            status.checks = [check, ...(status.checks || [])].slice(0, 200);
-            await github.rest.repos.createOrUpdateFileContents({ owner: context.repo.owner, repo: context.repo.repo, path: 'data/status.json', message: 'Update ticket status', content: Buffer.from(JSON.stringify(status, null, 2) + '\n').toString('base64'), sha: file.data.sha });
+
+            status.checks =
+              [check,...(status.checks || [])]
+              .slice(0,200);
+
+
+            fs.writeFileSync(
+              statusPath,
+              JSON.stringify(status,null,2)+'\n'
+            );
+
+
+          }
+
+
+          main();
+          EOF
+
+
+          node check.js
+
+
+      - name: Commit status update
+        run: |
+          git config user.name "github-actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add data/status.json
+
+          git commit -m "Update ticket status" || echo "No changes"
+
+          git push
