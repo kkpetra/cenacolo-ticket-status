@@ -21,6 +21,7 @@ jobs:
               const html = await response.text();
 
               console.log("HTML length:", html.length);
+              console.log("HTML content:", html);
               console.log("Has 2026:", html.includes("2026"));
               console.log("Has cookie:", html.toLowerCase().includes("cookie"));
               console.log("Title:", html.match(/<title>(.*?)<\/title>/i));
