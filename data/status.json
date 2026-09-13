@@ -1,0 +1,22 @@
+{
+  "target": {
+    "date": "2026-10-02",
+    "quantity": 2,
+    "language": "English guided tour",
+    "source": "https://cenacolovinciano.vivaticket.it/en/event/cenacolo-visite-guidate-a-orario-fisso-in-inglese/238363?idt=2547"
+  },
+  "latest": {
+    "checkedAt": "2026-09-13T10:49:00.000Z",
+    "outcome": "unavailable",
+    "availableSeats": 0,
+    "message": "Initial check: fewer than two tickets are currently reported."
+  },
+  "checks": [
+    {
+      "checkedAt": "2026-09-13T10:49:00.000Z",
+      "outcome": "unavailable",
+      "availableSeats": 0,
+      "message": "Initial check: fewer than two tickets are currently reported."
+    }
+  ]
+}
