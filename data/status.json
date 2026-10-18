@@ -6,12 +6,18 @@
     "source": "https://cenacolovinciano.vivaticket.it/en/event/cenacolo-visite-guidate-a-orario-fisso-in-inglese/238363?idt=2547"
   },
   "latest": {
-    "checkedAt": "2026-10-18T04:59:57.749Z",
+    "checkedAt": "2026-10-18T09:29:46.161Z",
     "outcome": "error",
     "message": "Could not find the 2026-10-02 availability record",
     "source": "https://cenacolovinciano.vivaticket.it/en/event/cenacolo-visite-guidate-a-orario-fisso-in-inglese/238363?idt=2547"
   },
   "checks": [
+    {
+      "checkedAt": "2026-10-18T09:29:46.161Z",
+      "outcome": "error",
+      "message": "Could not find the 2026-10-02 availability record",
+      "source": "https://cenacolovinciano.vivaticket.it/en/event/cenacolo-visite-guidate-a-orario-fisso-in-inglese/238363?idt=2547"
+    },
     {
       "checkedAt": "2026-10-18T04:59:57.749Z",
       "outcome": "error",
